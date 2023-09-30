@@ -1,4 +1,6 @@
+use anyhow::Result;
 use clap::Parser;
+use image::{io::Reader, GenericImageView};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -6,7 +8,9 @@ struct Cli {
     path: PathBuf,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Cli::parse();
-    println!("{}", args.path.display());
+    let image = Reader::open(args.path)?.decode()?;
+    println!("{:?}", image.dimensions());
+    Ok(())
 }
