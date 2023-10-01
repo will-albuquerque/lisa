@@ -2,8 +2,8 @@ use std::{array, path::PathBuf};
 
 use anyhow::Result;
 use clap::Parser;
-use image::{io::Reader, GenericImageView};
-use imageproc::point::Point;
+use image::{io::Reader, Rgb, RgbImage};
+use imageproc::{drawing, point::Point};
 use rand::{
     distributions::{Distribution, Uniform},
     Rng,
@@ -34,12 +34,19 @@ pub struct Cli {
 
 pub fn run(cli: Cli) -> Result<()> {
     let image = Reader::open(cli.path)?.decode()?;
-    let x_uniform = Uniform::new_inclusive(0, image.width());
-    let y_uniform = Uniform::new_inclusive(0, image.height());
-    let distribution = Bivariate(x_uniform, y_uniform);
+
+    // Generate random triangle
+    let distribution = Bivariate(
+        Uniform::new_inclusive(0, image.width() as i32),
+        Uniform::new_inclusive(0, image.height() as i32),
+    );
     let mut rng = rand::thread_rng();
-    let triangle: Triangle<u32> = distribution.sample(&mut rng);
-    println!("{:?}", image.dimensions());
-    println!("{:?}", triangle);
+    let triangle: Triangle<_> = distribution.sample(&mut rng);
+
+    // Draw on new image
+    let mut canvas = RgbImage::from_pixel(image.width(), image.height(), Rgb([255; 3]));
+    drawing::draw_polygon_mut(&mut canvas, triangle.0.as_slice(), Rgb([0; 3]));
+    canvas.save("output.png")?;
+
     Ok(())
 }
