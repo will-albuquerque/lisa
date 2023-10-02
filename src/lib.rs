@@ -1,31 +1,14 @@
-use std::{array, path::PathBuf};
+mod bivariate;
+mod triangle;
 
 use anyhow::Result;
+use bivariate::Bivariate;
 use clap::Parser;
 use image::{io::Reader, Rgb, RgbImage};
-use imageproc::{drawing, point::Point};
-use rand::{
-    distributions::{Distribution, Uniform},
-    Rng,
-};
-
-struct Bivariate<P, Q>(P, Q);
-
-#[derive(Debug)]
-struct Triangle<T>([Point<T>; 3]);
-
-impl<T, P, Q> Distribution<Triangle<T>> for Bivariate<P, Q>
-where
-    P: Distribution<T>,
-    Q: Distribution<T>,
-{
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Triangle<T> {
-        Triangle(array::from_fn(|_| Point {
-            x: self.0.sample(rng),
-            y: self.1.sample(rng),
-        }))
-    }
-}
+use imageproc::drawing;
+use rand::distributions::{Distribution, Uniform};
+use std::path::PathBuf;
+use triangle::Triangle;
 
 #[derive(Parser)]
 pub struct Cli {
@@ -36,7 +19,7 @@ pub fn run(cli: Cli) -> Result<()> {
     let image = Reader::open(cli.path)?.decode()?;
 
     // Generate random triangle
-    let distribution = Bivariate(
+    let distribution = Bivariate::new(
         Uniform::new_inclusive(0, image.width() as i32),
         Uniform::new_inclusive(0, image.height() as i32),
     );
@@ -45,7 +28,7 @@ pub fn run(cli: Cli) -> Result<()> {
 
     // Draw on new image
     let mut canvas = RgbImage::from_pixel(image.width(), image.height(), Rgb([255; 3]));
-    drawing::draw_polygon_mut(&mut canvas, triangle.0.as_slice(), Rgb([0; 3]));
+    drawing::draw_polygon_mut(&mut canvas, &triangle.into_inner(), Rgb([0; 3]));
     canvas.save("output.png")?;
 
     Ok(())

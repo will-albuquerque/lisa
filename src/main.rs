@@ -1,3 +1,6 @@
+mod bivariate;
+mod triangle;
+
 use anyhow::Result;
 
 use clap::Parser;
