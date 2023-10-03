@@ -25,3 +25,24 @@ where
         }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::{distributions::Standard, rngs::mock::StepRng};
+
+    #[test]
+    fn sample_random_triangle() {
+        let mut rng = StepRng::new(0, 1);
+        let dist = Bivariate::new(Standard, Standard);
+        let triangle = dist.sample(&mut rng);
+        assert_eq!(
+            triangle.into_inner(),
+            [
+                Point { x: 0, y: 1 },
+                Point { x: 2, y: 3 },
+                Point { x: 4, y: 5 }
+            ]
+        );
+    }
+}
