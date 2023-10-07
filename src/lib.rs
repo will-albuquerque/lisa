@@ -1,12 +1,16 @@
 mod bivariate;
+mod rgb;
 mod triangle;
 
 use anyhow::Result;
 use bivariate::Bivariate;
 use clap::Parser;
-use image::{io::Reader, Rgb, RgbImage};
+use image::{io::Reader, RgbImage};
 use imageproc::drawing;
-use rand::distributions::{Distribution, Uniform};
+use rand::{
+    distributions::{Distribution, Uniform},
+    Rng,
+};
 use std::path::PathBuf;
 use triangle::Triangle;
 
@@ -27,8 +31,12 @@ pub fn run(cli: Cli) -> Result<()> {
     let triangle: Triangle<_> = distribution.sample(&mut rng);
 
     // Draw on new image
-    let mut canvas = RgbImage::from_pixel(image.width(), image.height(), Rgb([255; 3]));
-    drawing::draw_polygon_mut(&mut canvas, &triangle.into_inner(), Rgb([0; 3]));
+    let mut canvas = RgbImage::from_pixel(image.width(), image.height(), image::Rgb([255; 3]));
+    drawing::draw_polygon_mut(
+        &mut canvas,
+        &triangle.into_inner(),
+        rng.gen::<rgb::Rgb<_>>().into_inner(),
+    );
     canvas.save("output.png")?;
 
     Ok(())
